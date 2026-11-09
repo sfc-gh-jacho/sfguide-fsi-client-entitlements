@@ -38,7 +38,7 @@ Then change the first line to `SET demo_role = 'ENT_DEMO_ROLE';`. This path was 
 
 > **Why `GRANT ... TO ROLE SYSADMIN`?** A custom role that isn't in the role hierarchy owns objects that even ACCOUNTADMIN can't drop. Granting it to SYSADMIN keeps administrators in control.
 
-## Run the demo in Snowsight
+## Run the example in Snowsight
 
 1. Download [`sql/client_entitlements.sql`](sql/client_entitlements.sql).
 2. In Snowsight, open **Projects → Worksheets** and create a new SQL worksheet.
@@ -65,6 +65,20 @@ Then change the first line to `SET demo_role = 'ENT_DEMO_ROLE';`. This path was 
 | Views | `ENT_CLIENT_PROFILE` (aggregation-constrained), `ENT_RESEARCH_SECTOR_EXPOSURE` (secure) |
 | Policies and tag | `ent_book_policy`, `ent_mask_tax_id`, `ent_mask_account_no`, `ent_mask_email`, `ent_band_net_worth`, `ent_mask_sensitive`, `ent_min_10_clients`, tag `CLIENT_SENSITIVITY` |
 | Roles | `ENT_ADVISOR_01`–`06`, `ENT_BRANCH_MGR_EAST` / `CENTRAL` / `WEST`, `ENT_COMPLIANCE`, `ENT_RESEARCH_PARTNER` |
+
+## Cost and time
+
+- **Time:** about 25 minutes to read and run top to bottom.
+- **Compute:** measured at about **0.03 credits per full run** on the XSMALL warehouse, which auto-suspends after 60 seconds idle.
+- **Validation:** tested end to end on November 9, 2026 on an Enterprise Edition account (AWS), both as ACCOUNTADMIN and with the least-privilege role. Results matched, and cleanup removed every object.
+
+## Known limitations
+
+- **Role-based entitlements.** Access keys on `CURRENT_ROLE()` and one role per advisor book, which keeps the example self-contained. Many firms key on `CURRENT_USER()` instead; see the Cortex Code prompts below.
+- **Secondary roles are switched off.** The script runs `USE SECONDARY ROLES NONE` so tests reflect each role's own grants. Turn them back on afterward if you use them.
+- **Aggregation policy bodies can't read tables.** The partner exemption list sits in the policy itself, not in the mapping table.
+- **Banding returns a number.** A masking policy must return the column's type, so net-worth bands show as their lower bound (for example 1,000,000), not as text ranges.
+- **Sharing (Step 11) is untested here** because it needs a second account. It's commented out.
 
 ## Customize with Cortex Code
 
@@ -97,3 +111,5 @@ Licensed under the [Apache License, Version 2.0](LICENSE). Prism.js, used for sy
 ## Disclaimer
 
 All clients, advisors, accounts and holdings are synthetic. Names are generated, emails use the reserved `@example.com` domain, tax IDs start with 9 (a range never issued as Social Security numbers), phone numbers use the fictional 555-01xx range, and tickers are fictional. This guide is not compliance advice. The repository contains no credentials, account identifiers or connection details.
+
+This is an illustrative example provided as-is. It is not an official Snowflake product and is not supported by Snowflake Support. It is not regulatory or compliance advice. Review and test before any production use.
