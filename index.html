@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Client Data Entitlements for Wealth Management — Snowflake Demo Packs</title>
+  <meta name="description" content="One wealth-management dataset, many audiences: mapping-table row access, masking and net-worth banding, tag-based masking, aggregation policies and a secure research view in Snowflake." />
+  <link rel="stylesheet" href="vendor/prism/prism-tomorrow.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <!-- ────── Nav ────── -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <div class="nav-logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        Client Entitlements
+      </a>
+      <button class="nav-hamburger" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" role="list">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#entitlements">Entitlements</a></li>
+        <li><a href="#rowaccess">Row Access</a></li>
+        <li><a href="#masking">Masking</a></li>
+        <li><a href="#aggregation">Partner Access</a></li>
+        <li><a href="#conclusion">Wrap-up</a></li>
+        <li><a href="https://github.com/sfc-gh-jacho/sfguide-fsi-client-entitlements">GitHub</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ────── Hero ────── -->
+  <header class="hero" id="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Financial Services · Wealth Management
+      </div>
+      <h1>Client Data <span>Entitlements</span></h1>
+      <p>One holdings dataset, many audiences. Advisors see their book, managers their branch, compliance everything, and a research partner only aggregates. All of it is enforced on the data.</p>
+      <div class="hero-ctas">
+        <a href="#overview" class="btn btn-primary">Start the Guide</a>
+        <a href="sql/client_entitlements.sql" class="btn btn-ghost" download>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Full SQL
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-val">~25 min</div><div class="hero-stat-label">Time to Complete</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">300</div><div class="hero-stat-label">Synthetic Clients</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">11</div><div class="hero-stat-label">Roles, 1 Mapping Table</div></div>
+        <div class="hero-stat"><div class="hero-stat-val">4</div><div class="hero-stat-label">Policy Types</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ────── Overview ────── -->
+    <section id="overview">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-label">Overview</div>
+          <h2>Every Audience Sees Exactly What It Should</h2>
+          <p>A fictional wealth firm has 3 branches, 6 advisors and 300 clients. Rather than building a separate extract for each audience, it keeps one governed dataset and lets policies decide who sees which rows, and in how much detail.</p>
+        </div>
+        <div class="pipeline reveal">
+          <div class="pipeline-card"><div class="pipeline-step grad-1">1</div><h3>Advisor</h3><p>Their own client book only, with enough contact detail to serve those clients.</p></div>
+          <div class="pipeline-card"><div class="pipeline-step grad-3">2</div><h3>Branch manager</h3><p>Every book in the branch, with identifiers masked and net worth banded for oversight.</p></div>
+          <div class="pipeline-card"><div class="pipeline-step grad-4">3</div><h3>Compliance</h3><p>All clients, unmasked, for surveillance, audit and regulatory requests.</p></div>
+          <div class="pipeline-card"><div class="pipeline-step grad-2">4</div><h3>Research partner</h3><p>Aggregates only. Groups of fewer than 10 clients are suppressed, and no identifiers appear.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ────── Prerequisites ────── -->
+    <section id="prereqs" class="bg-alt">
+      <div class="container narrow">
+        <div class="section-header reveal">
+          <div class="section-label">Prerequisites</div>
+          <h2>Before You Begin</h2>
+        </div>
+        <ul class="checklist reveal">
+          <li><strong>Enterprise Edition or higher</strong> for row access, masking, tag-based masking and aggregation policies.</li>
+          <li><strong>A role to run it.</strong> ACCOUNTADMIN is simplest in a sandbox. For regulated environments, the top of Step 1 includes a <strong>least-privilege option</strong>: an administrator creates <code>ENT_DEMO_ROLE</code> once with only CREATE DATABASE, CREATE WAREHOUSE, CREATE ROLE and APPLY MASKING POLICY, and grants it to SYSADMIN. You then set <code>demo_role</code> to that role on the first line of the script.</li>
+          <li><strong>One Snowsight worksheet, run top to bottom.</strong> The script creates its own <code>ENT_DEMO_DB</code>, <code>ENT_WH</code> and <code>ENT_</code> roles and changes nothing else.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ────── Steps ────── -->
+    <section id="setup">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">1</div><div><div class="section-label">Step 1</div><h2>Setup</h2></div></div>
+          <p>Choose the role that runs the demo, then create a dedicated database and an XSMALL warehouse that suspends after 60 seconds idle.</p>
+          <div class="code-wrap" data-step="setup"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="roles" class="bg-alt">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">2</div><div><div class="section-label">Step 2</div><h2>One Role per Book, Branch and Function</h2></div></div>
+          <p>Six advisor roles, three branch-manager roles, compliance and the external partner, all granted to the role running the script so you can switch between them. <code>USE SECONDARY ROLES NONE</code> makes each test role rely only on its own grants.</p>
+          <div class="callout">Many Snowsight users have secondary roles turned on by default. That makes privilege checks also use your other roles, so a missing grant wouldn't show up when you switch to a test role. Policies always evaluate <code>CURRENT_ROLE()</code>. The cleanup step restores the setting.</div>
+          <div class="code-wrap" data-step="roles"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">3</div><div><div class="section-label">Step 3</div><h2>Synthetic Clients, Accounts and Holdings</h2></div></div>
+          <p>This step generates 300 clients, 600 accounts and about 3,850 positions in fictional tickers, deterministically, so every run matches. Every table carries <code>ADVISOR_ID</code> and <code>BRANCH</code>, so a single row access policy can protect all three without nested lookups.</p>
+          <div class="code-wrap" data-step="data"></div>
+          <h3 class="table-title">Client books <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="books"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="entitlements" class="bg-alt">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">4</div><div><div class="section-label">Step 4</div><h2>The Entitlements Mapping Table</h2></div></div>
+          <p>Who may see what is stored as data. Each role maps to an advisor book, a branch or everything. Covering a colleague's book, onboarding an advisor or reorganizing branches becomes an <code>INSERT</code> or <code>DELETE</code> on this table. No policy needs rewriting or redeploying.</p>
+          <div class="code-wrap" data-step="entitlements"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rowaccess">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">5</div><div><div class="section-label">Step 5</div><h2>A Row Access Policy Driven by Data</h2></div></div>
+          <p>One policy reads the mapping table and is attached to all three tables. The same <code>SELECT COUNT(*)</code> returns 50, 100 or 300 clients depending on the role. At the end, one <code>INSERT</code> gives Advisor 01 temporary coverage of Advisor 02's book, and one <code>DELETE</code> takes it away again.</p>
+          <div class="code-wrap" data-step="rowaccess"></div>
+          <h3 class="table-title">Clients visible per role <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="visibility"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="masking" class="bg-alt">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">6</div><div><div class="section-label">Step 6</div><h2>Masking and Net-Worth Banding</h2></div></div>
+          <p>Advisors get what they need to serve their own clients: full email and the last four digits of the tax ID. Branch managers get oversight detail only. Net worth is <strong>banded</strong> for everyone except compliance. A masking policy must return the column's own type, so each band shows as its lower bound: $250K, $1M, $5M or $10M.</p>
+          <div class="code-wrap" data-step="masking"></div>
+          <h3 class="table-title">Client C0001 as each role sees them <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="masking"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tags">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">7</div><div><div class="section-label">Step 7</div><h2>Tag-based Masking for New Columns</h2></div></div>
+          <p>Attach a masking policy to a <code>CLIENT_SENSITIVITY</code> tag once. When a new column arrives, here a mobile phone number, tagging it protects it immediately with no new policy. The advisor still sees the number, and the branch manager doesn't.</p>
+          <div class="code-wrap" data-step="tags"></div>
+          <h3 class="table-title">New column, protected on arrival <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="tag"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="aggregation" class="bg-alt">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">8</div><div><div class="section-label">Step 8</div><h2>Aggregation Policy for the Research Partner</h2></div></div>
+          <p>An aggregation policy on a one-row-per-client view means the partner can only run grouped queries. Any group with fewer than 10 clients is folded into a single remainder row, so no individual client can be singled out. Compliance is exempt.</p>
+          <div class="code-wrap" data-step="aggregation"></div>
+          <h3 class="table-title">The partner's queries <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="aggregation"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="research">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">9</div><div><div class="section-label">Step 9</div><h2>A Secure, De-identified Research View</h2></div></div>
+          <p>The secure view exposes sector exposure by branch with no client, account or advisor identifiers, and it hides its own SQL definition. The partner can query it but can't read the underlying client table at all.</p>
+          <div class="code-wrap" data-step="research"></div>
+          <h3 class="table-title">Partner's view: EAST branch sector exposure <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="research"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="testing">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">10</div><div><div class="section-label">Step 10</div><h2>Test as Each Role</h2></div></div>
+          <p>One query for assets under management, run as three roles, returns three answers. There's no <code>WHERE</code> clause and no application logic. The firm's entitlement model is enforced the same way in every tool.</p>
+          <div class="code-wrap" data-step="testing"></div>
+          <h3 class="table-title">Assets under management by role <span class="real-badge">Real run output</span></h3>
+          <div class="results" data-results="aum"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="share" class="bg-alt">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">11</div><div><div class="section-label">Step 11 · Optional</div><h2>Share with a Partner Account</h2></div></div>
+          <p>With a second Snowflake account, share the secure research view directly. The partner queries live data with no extracts or file transfers. Replace the partner account placeholder with the consumer's identifier.</p>
+          <div class="code-wrap" data-step="share"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cleanup">
+      <div class="container narrow">
+        <div class="step reveal">
+          <div class="step-head"><div class="deploy-num">12</div><div><div class="section-label">Step 12</div><h2>Clean Up</h2></div></div>
+          <p>Uncomment and run this block. Dropping the database removes the tables, views, policies and tag. The warehouse and roles are dropped separately, and you can turn secondary roles back on if you normally use them.</p>
+          <div class="code-wrap" data-step="cleanup"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ────── Conclusion ────── -->
+    <section id="conclusion" class="bg-alt">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-label">Wrap-up</div>
+          <h2>Key Takeaways</h2>
+          <p>One governed dataset replaced four extracts, and every audience's access lives in policies and a mapping table you can audit.</p>
+        </div>
+        <div class="cortex-grid reveal">
+          <div class="cortex-card"><h3>Entitlements are data</h3><p>A mapping table drives row access, so coverage changes are an INSERT, not a policy deployment.</p></div>
+          <div class="cortex-card"><h3>Detail by purpose</h3><p>Masking and banding give each role the level of detail its job needs, and no more.</p></div>
+          <div class="cortex-card"><h3>Safe external analytics</h3><p>An aggregation policy and a secure view let partners analyze trends without ever seeing a client.</p></div>
+          <div class="cortex-card"><h3>Protected by default</h3><p>Tag-based masking covers new sensitive columns the moment they're tagged.</p></div>
+        </div>
+        <div class="doc-links reveal">
+          <h3>Learn more in the Snowflake documentation</h3>
+          <div class="doc-grid">
+            <a href="https://docs.snowflake.com/en/user-guide/security-row-intro" target="_blank" rel="noopener">Row Access Policies →</a>
+            <a href="https://docs.snowflake.com/en/user-guide/security-column-ddm-intro" target="_blank" rel="noopener">Dynamic Data Masking →</a>
+            <a href="https://docs.snowflake.com/en/user-guide/tag-based-masking-policies" target="_blank" rel="noopener">Tag-based Masking →</a>
+            <a href="https://docs.snowflake.com/en/user-guide/aggregation-policies" target="_blank" rel="noopener">Aggregation Policies →</a>
+            <a href="https://docs.snowflake.com/en/user-guide/views-secure" target="_blank" rel="noopener">Secure Views →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ────── Footer ────── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-col">
+          <h4>Guide</h4>
+          <a href="#overview">Overview</a>
+          <a href="#entitlements">Entitlements Table</a>
+          <a href="#masking">Masking and Banding</a>
+          <a href="#aggregation">Partner Access</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="sql/client_entitlements.sql" download>Download SQL</a>
+          <a href="https://github.com/sfc-gh-jacho/sfguide-fsi-client-entitlements">GitHub Repository</a>
+          <a href="https://docs.snowflake.com/en/guides-overview-govern" target="_blank" rel="noopener">Governance Docs</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-disclaimer">Code licensed under <a href="https://github.com/sfc-gh-jacho/sfguide-fsi-client-entitlements/blob/main/LICENSE">Apache 2.0</a>. All clients, advisors, accounts and holdings are synthetic: names are generated, emails use @example.com, tax IDs start with 9 and tickers are fictional. This guide is not compliance advice. This site has no connection to any Snowflake account.</p>
+        <span class="snow-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.3" y1="7" x2="20.7" y2="17"/><line x1="3.3" y1="17" x2="20.7" y2="7"/></svg>
+          Built on Snowflake Horizon
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="vendor/prism/prism.min.js"></script>
+  <script src="vendor/prism/prism-sql.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

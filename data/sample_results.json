@@ -1,0 +1,242 @@
+{
+  "_note": "Captured from a real end-to-end run of sql/client_entitlements.sql on synthetic data. Names are generated, emails use @example.com and tax IDs start with 9.",
+  "totals": {
+    "clients": 300,
+    "accounts": 600,
+    "holdings": 3851
+  },
+  "books": [
+    {
+      "branch": "EAST",
+      "advisor": "ADV01",
+      "clients": 50
+    },
+    {
+      "branch": "EAST",
+      "advisor": "ADV02",
+      "clients": 50
+    },
+    {
+      "branch": "CENTRAL",
+      "advisor": "ADV03",
+      "clients": 50
+    },
+    {
+      "branch": "CENTRAL",
+      "advisor": "ADV04",
+      "clients": 50
+    },
+    {
+      "branch": "WEST",
+      "advisor": "ADV05",
+      "clients": 50
+    },
+    {
+      "branch": "WEST",
+      "advisor": "ADV06",
+      "clients": 50
+    }
+  ],
+  "visibility": [
+    {
+      "role": "ENT_ADVISOR_01",
+      "clients": 50,
+      "books": "ADV01"
+    },
+    {
+      "role": "ENT_ADVISOR_02",
+      "clients": 50,
+      "books": "ADV02"
+    },
+    {
+      "role": "ENT_BRANCH_MGR_EAST",
+      "clients": 100,
+      "books": "ADV01,ADV02"
+    },
+    {
+      "role": "ENT_BRANCH_MGR_WEST",
+      "clients": 100,
+      "books": "ADV05,ADV06"
+    },
+    {
+      "role": "ENT_COMPLIANCE",
+      "clients": 300,
+      "books": "ADV01,ADV02,ADV03,ADV04,ADV05,ADV06"
+    },
+    {
+      "role": "ENT_ADVISOR_01 (covering ADV02)",
+      "clients": 100,
+      "books": "ADV01,ADV02"
+    }
+  ],
+  "masking": [
+    {
+      "role": "ENT_ADVISOR_01",
+      "name": "Blake Quill",
+      "email": "blake.quill1@example.com",
+      "tax_id": "***-**-6033",
+      "net_worth": 1000000,
+      "account_number": "****2650"
+    },
+    {
+      "role": "ENT_BRANCH_MGR_EAST",
+      "name": "Blake Quill",
+      "email": "****@example.com",
+      "tax_id": "***-**-****",
+      "net_worth": 1000000,
+      "account_number": "****2650"
+    },
+    {
+      "role": "ENT_COMPLIANCE",
+      "name": "Blake Quill",
+      "email": "blake.quill1@example.com",
+      "tax_id": "901-00-6033",
+      "net_worth": 2631000,
+      "account_number": "48342650"
+    },
+    {
+      "role": "ENT_ADVISOR_02",
+      "hidden": true,
+      "rows": 0
+    }
+  ],
+  "tag": [
+    {
+      "role": "ENT_ADVISOR_01",
+      "mobile_phone": "555-0129"
+    },
+    {
+      "role": "ENT_BRANCH_MGR_EAST",
+      "mobile_phone": "*** RESTRICTED ***"
+    }
+  ],
+  "aggregation": {
+    "row_level": "Row-level query BLOCKED: SQL compilation error: Aggregation policy violation: aggregation required.",
+    "grouped": [
+      {
+        "branch": "CENTRAL",
+        "segment": "HIGH_NET_WORTH",
+        "clients": 25,
+        "avg_aum": 4479879
+      },
+      {
+        "branch": "CENTRAL",
+        "segment": "MASS_AFFLUENT",
+        "clients": 51,
+        "avg_aum": 566042
+      },
+      {
+        "branch": "CENTRAL",
+        "segment": "ULTRA_HIGH_NET_WORTH",
+        "clients": 24,
+        "avg_aum": 22462356
+      },
+      {
+        "branch": "EAST",
+        "segment": "HIGH_NET_WORTH",
+        "clients": 24,
+        "avg_aum": 4941272
+      },
+      {
+        "branch": "EAST",
+        "segment": "MASS_AFFLUENT",
+        "clients": 57,
+        "avg_aum": 548004
+      },
+      {
+        "branch": "EAST",
+        "segment": "ULTRA_HIGH_NET_WORTH",
+        "clients": 19,
+        "avg_aum": 24471705
+      },
+      {
+        "branch": "WEST",
+        "segment": "HIGH_NET_WORTH",
+        "clients": 19,
+        "avg_aum": 5142748
+      },
+      {
+        "branch": "WEST",
+        "segment": "MASS_AFFLUENT",
+        "clients": 55,
+        "avg_aum": 543576
+      },
+      {
+        "branch": "WEST",
+        "segment": "ULTRA_HIGH_NET_WORTH",
+        "clients": 26,
+        "avg_aum": 25293608
+      }
+    ]
+  },
+  "research": {
+    "rows": [
+      {
+        "branch": "EAST",
+        "sector": "CONSUMER",
+        "clients": 77,
+        "market_value": 89864000
+      },
+      {
+        "branch": "EAST",
+        "sector": "REAL_ESTATE",
+        "clients": 81,
+        "market_value": 82656000
+      },
+      {
+        "branch": "EAST",
+        "sector": "UTILITIES",
+        "clients": 76,
+        "market_value": 78373000
+      },
+      {
+        "branch": "EAST",
+        "sector": "FINANCIALS",
+        "clients": 77,
+        "market_value": 76656000
+      },
+      {
+        "branch": "EAST",
+        "sector": "INDUSTRIALS",
+        "clients": 84,
+        "market_value": 76218000
+      },
+      {
+        "branch": "EAST",
+        "sector": "HEALTHCARE",
+        "clients": 88,
+        "market_value": 74971000
+      },
+      {
+        "branch": "EAST",
+        "sector": "TECHNOLOGY",
+        "clients": 80,
+        "market_value": 71023000
+      },
+      {
+        "branch": "EAST",
+        "sector": "ENERGY",
+        "clients": 77,
+        "market_value": 65027000
+      }
+    ],
+    "table_access": "Client table BLOCKED: SQL compilation error: Object 'ENT_DEMO_DB.WEALTH.ENT_CLIENTS' does not exist or not authorized. Your primary role ENT_RESEARCH_PARTNER must have at least one privilege granted on TABLE ENT_DEMO_DB.WEALTH.ENT_CLIENTS."
+  },
+  "aum": [
+    {
+      "role": "ENT_ADVISOR_01",
+      "clients": 50,
+      "aum": 266376000
+    },
+    {
+      "role": "ENT_BRANCH_MGR_EAST",
+      "clients": 100,
+      "aum": 614789000
+    },
+    {
+      "role": "ENT_COMPLIANCE",
+      "clients": 300,
+      "aum": 2079993000
+    }
+  ]
+}
