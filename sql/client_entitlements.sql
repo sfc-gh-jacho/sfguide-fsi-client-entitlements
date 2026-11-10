@@ -25,7 +25,7 @@
 -- STEP 1: SETUP
 -- ============================================================================
 
--- Choose the role that runs the demo:
+-- Choose the role to run the guide:
 --   'ACCOUNTADMIN'  - simplest, for sandbox accounts
 --   'ENT_DEMO_ROLE' - least privilege; create it once with the block below
 SET demo_role = 'ACCOUNTADMIN';
